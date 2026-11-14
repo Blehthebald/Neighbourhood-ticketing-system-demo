@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neighbourhood Ticketing System (NTS)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+</head>
+<body>
+
+    <header>
+        <h1>Neighbourhood Ticketing System (NTS)</h1>
+        <p>Serving the Bukit Damansara Community</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- Tab Navigation -->
+        <div class="tab-bar">
+            <button class="tab-link active" onclick="openTab(event, 'public-tickets')">Public Tickets</button>
+            <button class="tab-link" onclick="openTab(event, 'geomap')">GeoMap</button>
+            <button class="tab-link" onclick="openTab(event, 'my-tickets')">My Tickets</button>
+            <button class="tab-link add-btn" onclick="openTab(event, 'file-ticket')">+ File Ticket</button>
+        </div>
+
+        <!-- ======================= PUBLIC TICKETS TAB (DEFAULT) ======================= -->
+        <div id="public-tickets" class="tab-content" style="display: block;">
+            <h2>Public Tickets</h2>
+            
+            <div class="form-group filter-group">
+               <input type="text" id="search-input" placeholder="Search incidents by name..." style="flex: 1;" oninput="filterTickets()">
+                <button class="search-btn">Search</button>
+                <button class="icon-btn" onclick="toggleFilters()" title="Filter by Tag">
+                    <!-- SVG Filter Icon -->
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Collapsible Tag Filter Menu -->
+            <div id="tag-filters" class="filter-collapse">
+                <h3>Filter by Tag</h3>
+                <div class="filter-options">
+                    <label><input type="checkbox" value="electrical"> Broken streetlights or electrical issues</label>
+                    <label><input type="checkbox" value="road"> Road, pavement, or drainage problems</label>
+                    <label><input type="checkbox" value="landscaping"> Landscaping, overgrown plants, or fallen branches</label>
+                    <label><input type="checkbox" value="cleanliness"> Rubbish, cleanliness, or pest problems</label>
+                    <label><input type="checkbox" value="facilities"> Damage to shared facilities</label>
+                    <label><input type="checkbox" value="water"> Water leaks or plumbing issues in shared areas</label>
+                    <label><input type="checkbox" value="noise"> Noise problems</label>
+                    <label><input type="checkbox" value="parking"> Parking or traffic problems</label>
+                    <label><input type="checkbox" value="safety"> Safety hazards in shared areas</label>
+                    <label><input type="checkbox" value="misc"> Miscellaneous</label>
+		    
+                </div>
+                <button class="apply-filter-btn">Apply Filters</button>
+            </div>
+            
+            <ul class="ticket-list">
+                <li>
+                    <div>
+                        <strong>Stray Dogs Near Park</strong> <span class="badge">Safety hazards in shared areas</span>
+                        <br><small class="status-text">Status: Unresolved</small>
+                    </div>
+                </li>
+                <li>
+                    <div>
+                        <strong>Fallen Tree Branch</strong> <span class="badge">Landscaping, overgrown plants, or fallen branches</span>
+                        <br><small class="status-text">Status: Resolved</small>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- ======================= GEOMAP TAB ======================= -->
+        <div id="geomap" class="tab-content">
+    <h2>Geotagged Tickets Map</h2>
+    <p>View the locations of all reported issues in Bukit Damansara.</p>
+    <div id="geomap-view" class="map-placeholder large-map"></div>
+</div>
+
+        <!-- ======================= MY TICKETS TAB ======================= -->
+        <div id="my-tickets" class="tab-content">
+            <h2>My Filed Tickets</h2>
+            <ul class="ticket-list">
+                <li>
+                    <div>
+                        <strong>Pothole on Main Road</strong> <span class="badge">Road, pavement, or drainage problems</span>
+                        <br><small class="status-text">Status: Unresolved</small>
+                    </div>
+                    <button class="delete-btn">Delete</button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- ======================= FILE TICKET TAB ======================= -->
+        <div id="file-ticket" class="tab-content">
+            <h2>File a New Ticket</h2>
+            <form action="#" method="POST" onsubmit="event.preventDefault();">
+                <div class="form-group">
+                    <label for="incident-name">Incident Name:</label>
+                    <input type="text" id="incident-name" name="incident-name" placeholder="E.g., Broken Streetlight" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <textarea id="description" name="description" rows="4" placeholder="Describe the incident..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tags">Tags (Categorization):</label>
+                    <select id="tags" name="tags" required>
+                        <option value="" disabled selected>Select an issue category...</option>
+                        <option value="electrical">Broken streetlights or electrical issues</option>
+                        <option value="road">Road, pavement, or drainage problems</option>
+                        <option value="landscaping">Landscaping, overgrown plants, or fallen branches</option>
+                        <option value="cleanliness">Rubbish, cleanliness, or pest problems</option>
+                        <option value="facilities">Damage to shared facilities</option>
+                        <option value="water">Water leaks or plumbing issues in shared areas</option>
+                        <option value="noise">Noise problems</option>
+                        <option value="parking">Parking or traffic problems</option>
+                        <option value="safety">Safety hazards in shared areas</option>
+                        <option value="misc">Miscellaneous</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="media">Attach Media (Photo/Video):</label>
+                    <input type="file" id="media" name="media" accept="image/*,video/*">
+                </div>
+                
+                <div class="form-group">
+    <label>Geotag / Drop Pin on Location:</label>
+    <div id="file-map-view" class="map-placeholder small-map"></div>
+    <!-- Hidden inputs to store coordinates to submit to backend -->
+    <input type="hidden" id="latitude" name="latitude">
+    <input type="hidden" id="longitude" name="longitude">
+</div>
+                
+                <div class="form-group">
+                    <label for="email">Your Email (For progress updates):</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">Submit Ticket</button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Frontend Logic -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+    console.log("=== NTS SCRIPT LOADED SUCCESSFULLY ===");
+    let publicMap = null;
+    let fileMap = null;
+    let currentMarker = null;
+
+    // Tab switching logic
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
+        tablinks = document.getElementsByClassName("tab-link");
+        for (i = 0; i < tablinks.length; i++) tablinks[i].className = tablinks[i].className.replace(" active", "");
+        
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+        
+        // Handle tab-specific initializations
+        if (tabName === 'public-tickets') {
+            fetchTickets();
+        } else if (tabName === 'geomap') {
+            initGeoMap();
+        } else if (tabName === 'file-ticket') {
+            initFileMap();
+        }
+    }
+
+    function toggleFilters() {
+        var filterMenu = document.getElementById("tag-filters");
+        filterMenu.style.display = filterMenu.style.display === "block" ? "none" : "block";
+    }
+
+    // Initialize the main GeoMap showing all ticket pins
+    function initGeoMap() {
+        if (!publicMap) {
+            // Initialize map centered on Bukit Damansara
+            publicMap = L.map('geomap-view').setView([3.1505, 101.6534], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(publicMap);
+        } else {
+            publicMap.invalidateSize(); // Fixes grey box rendering issue on tab switch
+        }
+        loadMapMarkers();
+    }
+
+    // Initialize the map inside the File Ticket form
+    function initFileMap() {
+        if (!fileMap) {
+            fileMap = L.map('file-map-view').setView([3.1505, 101.6534], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(fileMap);
+
+            // Allow user to click anywhere on the map to drop a pin
+            fileMap.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+
+                // Update hidden form fields
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lng;
+
+                // Move or create marker
+                if (currentMarker) {
+                    currentMarker.setLatLng([lat, lng]);
+                } else {
+                    currentMarker = L.marker([lat, lng]).addTo(fileMap);
+                }
+            });
+        } else {
+            fileMap.invalidateSize();
+        }
+    }
+
+    // Fetch tickets and display them as markers on GeoMap
+    async function loadMapMarkers() {
+        try {
+            const response = await fetch('http://localhost:3000/api/tickets');
+            const tickets = await response.json();
+            
+            tickets.forEach(ticket => {
+                if (ticket.latitude && ticket.longitude) {
+                    L.marker([ticket.latitude, ticket.longitude])
+                      .addTo(publicMap)
+                      .bindPopup(`<b>${ticket.incident_name}</b><br>${ticket.tag || ''}<br>Status: ${ticket.status}`);
+                }
+            });
+        } catch (error) {
+            console.error('Error loading map markers:', error);
+        }
+    }
+
+let allTickets = []; // Store all fetched tickets globally for filtering
+
+// Fetch tickets and store them
+async function fetchTickets() {
+    try {
+        const response = await fetch('http://localhost:3000/api/tickets');
+        allTickets = await response.json();
+        
+        // Render all tickets initially
+        renderTickets(allTickets);
+    } catch (error) {
+        console.error('Error fetching tickets:', error);
+    }
+}
+
+// Render tickets array to the DOM
+function renderTickets(ticketsToRender) {
+    const ticketList = document.querySelector('.ticket-list');
+    ticketList.innerHTML = ''; 
+    
+    if (ticketsToRender.length === 0) {
+        ticketList.innerHTML = '<li style="text-align: center; color: #888;">No tickets found.</li>';
+        return;
+    }
+
+    ticketsToRender.forEach(ticket => {
+        let mediaHtml = '';
+        if (ticket.media_url) {
+            if (ticket.media_url.match(/\.(mp4|mov|webm)$/i)) {
+                mediaHtml = `<br><video width="200" controls src="${ticket.media_url}" style="margin-top:8px; border-radius:4px;"></video>`;
+            } else {
+                mediaHtml = `<br><img src="${ticket.media_url}" alt="Incident Attachment" width="150" style="margin-top:8px; border-radius:4px; display:block;" />`;
+            }
+        }
+
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <div>
+                <strong>${ticket.incident_name}</strong> <span class="badge">${ticket.tag || 'No Tag'}</span>
+                <br><small class="status-text">Status: ${ticket.status}</small>
+                <br><small class="status-text" style="font-size: 10px;">Description: ${ticket.description || 'N/A'}</small>
+                <br><small class="status-text" style="font-size: 10px;">Location pinned: ${ticket.latitude ? 'Yes' : 'No'}</small>
+                ${mediaHtml}
+            </div>
+        `;
+        ticketList.appendChild(li);
+    });
+}
+
+function filterTickets() {
+    console.log(">>> filterTickets() EXECUTING <<<");
+
+    const searchInput = document.getElementById('search-input');
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    
+    // Collect all checked tag checkboxes
+    const selectedBoxes = Array.from(document.querySelectorAll('.tag-checkbox:checked'))
+                               .map(cb => cb.value.toLowerCase().trim());
+
+    console.log("Active Search Query:", JSON.stringify(searchQuery));
+    console.log("Active Selected Tags:", selectedBoxes);
+
+    const filtered = allTickets.filter(ticket => {
+        const name = ticket.incident_name ? ticket.incident_name.toLowerCase() : '';
+        const desc = ticket.description ? ticket.description.toLowerCase() : '';
+        const ticketTag = ticket.tag ? ticket.tag.toLowerCase().trim() : '';
+
+        const matchesSearch = name.includes(searchQuery) || desc.includes(searchQuery);
+        const matchesTag = selectedBoxes.length === 0 || selectedBoxes.includes(ticketTag);
+
+        // Print debug info for each ticket so we can see why it passes or fails
+        console.log(`Ticket [${ticket.incident_name}] | Tag in DB: "${ticketTag}" | Matches Search: ${matchesSearch} | Matches Tag: ${matchesTag}`);
+
+        return matchesSearch && matchesTag;
+    });
+
+    console.log(`Total Filtered Results: ${filtered.length} out of ${allTickets.length}`);
+    renderTickets(filtered);
+}
+
+// Attach event listener to the search input dynamically
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterTickets);
+    }
+});
+
+    // Form submission including coordinates and media file
+    document.querySelector('form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('http://localhost:3000/api/tickets', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert('Ticket submitted successfully!');
+                this.reset();
+                if (currentMarker) {
+                    fileMap.removeLayer(currentMarker);
+                    currentMarker = null;
+                }
+                // Switch back to public tickets tab to see the new ticket
+                document.querySelector('.tab-link').click(); 
+            } else {
+                alert('Error submitting ticket: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+        }
+    });
+
+    // Initial fetch when the page first loads
+   // Initial setup when the page loads
+// Initial setup when the page loads
+window.onload = function() {
+    console.log("Window loaded. Fetching tickets...");
+    fetchTickets();
+
+    // Force-attach the input event listener via JavaScript
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        console.log("Successfully found #search-input in DOM. Attaching listener.");
+        searchInput.addEventListener('input', function() {
+            console.log(">>> SEARCH BOX TYPED! filterTickets() IS RUNNING <<<");
+            filterTickets();
+        });
+    } else {
+        console.error("ERROR: #search-input could not be found!");
+    }
+
+    // Force-attach tag checkboxes
+    const checkboxes = document.querySelectorAll('.tag-checkbox');
+    checkboxes.forEach(box => {
+        box.addEventListener('change', function() {
+            console.log("Checkbox changed:", box.value);
+            filterTickets();
+        });
+    });
+};
+</script>
+</body>
+</html>
